@@ -1,3 +1,6 @@
 [submodule "src/main/resources/ethernet/vsrc/ethernet"]
 	path = src/main/resources/ethernet/vsrc/ethernet
 	url = https://github.com/alexforencich/verilog-ethernet.git
+[submodule "src/main/resources/ethernet/vsrc/axis"]
+	path = src/main/resources/ethernet/vsrc/axis
+	url = https://github.com/alexforencich/verilog-axis.git

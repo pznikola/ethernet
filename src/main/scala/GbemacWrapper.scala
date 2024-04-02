@@ -81,7 +81,8 @@ class GbEMAC extends BlackBox with HasBlackBoxResource {
     val dstPort1PacketNum       = Input(UInt(16.W))
     val dstPort2PacketNum       = Input(UInt(16.W))
   })
-  
+
+  // From Alex ethernet
   addResource("axis_gmii_rx.v")
   addResource("axis_gmii_tx.v")
   addResource("eth_mac_1g.v")
@@ -92,11 +93,14 @@ class GbEMAC extends BlackBox with HasBlackBoxResource {
   addResource("oddr.v")
   addResource("rgmii_phy_if.v")
   addResource("ssio_ddr_in.v")
+  // Added RTL
   addResource("AXI4StreamWidthAdapter1to4.v")
   addResource("AXI4StreamWidthAdapter4to1.v")
+  // From Alex axis
   addResource("axis_adapter.v")
   addResource("axis_async_fifo.v")
   addResource("axis_async_fifo_adapter.v")
+  
   addResource("eth_clockgen.v")
   addResource("eth_miim.v")
   addResource("eth_outputcontrol.v")

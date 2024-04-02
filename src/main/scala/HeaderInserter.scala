@@ -38,10 +38,10 @@ abstract class HeaderInserter[D, U, E, O, B <: Data](mode1024: Boolean, beatByte
     val outputDataLastVal = Wire(UInt(32.W))
 
     val fields = Seq(
-      RegField(1,  modeSelection, RegFieldDesc(name = "modeSelection", desc = "Mode Selection - false for 1024 bytes, true for 768 bytes")),
-      RegField(9,  chirpNum,      RegFieldDesc(name = "chirpNum", desc = "Chirp number - number of chirps in a frame")),
-      RegField(11, sampleNum,     RegFieldDesc(name = "sampleNum", desc = "Sample number - number of samples in a chirp")),
-      RegField(4,  antennaNum,    RegFieldDesc(name = "antennaNum", desc = "Antenna number - number of antennas used"))
+      RegField( 1, modeSelection, RegFieldDesc(name = "modeSelection", desc = "Mode Selection - false for 1024 bytes, true for 768 bytes")),
+      RegField( 9, chirpNum,      RegFieldDesc(name = "chirpNum",      desc = "Chirp number - number of chirps in a frame")),
+      RegField(11, sampleNum,     RegFieldDesc(name = "sampleNum",     desc = "Sample number - number of samples in a chirp")),
+      RegField( 4, antennaNum,    RegFieldDesc(name = "antennaNum",    desc = "Antenna number - number of antennas used"))
     )
     regmap(fields.zipWithIndex.map({ case (f, i) => i * beatBytes -> Seq(f) }): _*)
 
@@ -105,9 +105,7 @@ abstract class HeaderInserter[D, U, E, O, B <: Data](mode1024: Boolean, beatByte
     out.bits.last := out.fire && (outCounter === threshold)
     out.valid     := in.valid && out.ready
     out.bits.data := Mux((outCounter === 0.U), outputDataLastVal, in.bits.data)
-
   }
-
 }
 
 class AXI4HeaderInserterBlock(mode1024: Boolean, address: AddressSet, _beatBytes: Int = 4)(implicit p: Parameters)
@@ -133,7 +131,7 @@ trait HeaderInserterPins extends AXI4HeaderInserterBlock {
     AXI4StreamMasterParameters(n = beatBytes)
   ) := ioInNode
 
-  val in = InModuleBody { ioInNode.makeIO() }
+  val in  = InModuleBody { ioInNode.makeIO() }
   val out = InModuleBody { ioOutNode.makeIO() }
 
   def standaloneParams = AXI4BundleParameters(addrBits = 32, dataBits = 32, idBits = 1)

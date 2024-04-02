@@ -120,56 +120,56 @@ class TemacConfig(csrAddress: AddressSet, beatBytes:  Int) extends LazyModule()(
     val dstPort2PacketNum       = RegInit(UInt(16.W), 16.U)
 
     val fields = Seq(
-      RegField( 5, fiAd,                    RegFieldDesc(name = "fiAd", desc = "MDIO PHY address")), // 0x00
-      RegField( 5, rgAd,                    RegFieldDesc(name = "rgAd", desc = "MDIO regiser address")), // 0x04
-      RegField(16, ctrlData,                RegFieldDesc(name = "ctrlData", desc = "MDIO data")), // 0x08
-      RegField( 1, writeCtrlData,           RegFieldDesc(name = "writeCtrlData", desc = "Write MDIO data")), // 0x0C
-      RegField( 1, noPreamble,              RegFieldDesc(name = "noPreamble", desc = "No MDIO preamble")), // 0x10
-      RegField( 8, divider,                 RegFieldDesc(name = "divider", desc = "MDIO clock divider")), // 0x14
-      RegField( 3, speed,                   RegFieldDesc(name = "speed", desc = "MAC Ethernet speed")), // 0x18
-      RegField( 1, fullDuplex,              RegFieldDesc(name = "fullDuplex", desc = "Full duplex bus")), // 0x1C
-      RegField(16, packetSize,              RegFieldDesc(name = "packetSize", desc = "Packet size")), // 0x20
-      RegField( 5, txHwmark,                RegFieldDesc(name = "txHwmark", desc = "txHwmark")), // 0x24
-      RegField( 5, txLwmark,                RegFieldDesc(name = "txLwmark", desc = "txLwmark")), // 0x28
-      RegField( 1, pauseFrameSendEn,        RegFieldDesc(name = "pauseFrameSendEn", desc = "pauseFrameSendEn")), // 0x2C
-      RegField(16, pauseQuantaSet,          RegFieldDesc(name = "pauseQuantaSet", desc = "pauseQuantaSet")), // 0x30
-      RegField( 6, ifgSet,                  RegFieldDesc(name = "ifgSet", desc = "ifgSet")), // 0x34
-      RegField( 4, maxRetry,                RegFieldDesc(name = "maxRetry", desc = "maxRetry")), // 0x38
-      RegField( 1, macTxAddEn,              RegFieldDesc(name = "macTxAddEn", desc = "macTxAddEn")), // 0x3C
-      RegField( 8, macTxAddPromData,        RegFieldDesc(name = "macTxAddPromData", desc = "macTxAddPromData")), // 0x40
-      RegField( 3, macTxAddPromAdd,         RegFieldDesc(name = "macTxAddPromAdd", desc = "macTxAddPromAdd")), // 0x44
-      RegField( 1, macTxAddPromWr,          RegFieldDesc(name = "macTxAddPromWr", desc = "macTxAddPromWr")), // 0x48
-      RegField( 1, txPauseEn,               RegFieldDesc(name = "txPauseEn", desc = "txPauseEn")), // 0x4C
-      RegField( 1, xOffCpu,                 RegFieldDesc(name = "xOffCpu", desc = "xOffCpu")), // 0x50
-      RegField( 1, xOnCpu,                  RegFieldDesc(name = "xOnCpu", desc = "xOnCpu")), // 0x54
-      RegField( 1, macRxAddChkEn,           RegFieldDesc(name = "macRxAddChkEn", desc = "macRxAddChkEn")), // 0x58
-      RegField( 8, macRxAddPromData,        RegFieldDesc(name = "macRxAddPromData", desc = "macRxAddPromData")), // 0x5C
-      RegField( 3, macRxAddPromAdd,         RegFieldDesc(name = "macRxAddPromAdd", desc = "macRxAddPromAdd")), // 0x60
-      RegField( 1, macRxAddPromWr,          RegFieldDesc(name = "macRxAddPromWr", desc = "macRxAddPromWr")), // 0x64
-      RegField( 1, broadcastFilterEn,       RegFieldDesc(name = "broadcastFilterEn", desc = "broadcastFilterEn")), // 0x68
-      RegField(16, broadcastBucketDepth,    RegFieldDesc(name = "brodcastBucketDepth", desc = "brodcastBucketDepth")), // 0x6C
-      RegField(16, broadcastBucketInterval, RegFieldDesc(name = "brodcastBucketInterval", desc = "brodcastBucketInterval")), // 0x70
-      RegField( 1, rxAppendCrc,             RegFieldDesc(name = "rxAppendCrc", desc = "rxAppendCrc")), // 0x74
-      RegField( 5, rxHwmark,                RegFieldDesc(name = "rxHwmark", desc = "rxHwmark")), // 0x78
-      RegField( 5, rxLwmark,                RegFieldDesc(name = "rxLwmark", desc = "rxLwmark")), // 0x7C
-      RegField( 1, crcCheckEn,              RegFieldDesc(name = "crcCheckEn", desc = "crcCheckEn")), // 0x80
-      RegField( 6, rxIfgSet,                RegFieldDesc(name = "rxIfgSet", desc = "rxIfgSet")), // 0x84
-      RegField(16, rxMaxLength,             RegFieldDesc(name = "rxMaxLength", desc = "rxMaxLength")), // 0x88
-      RegField( 7, rxMinLength,             RegFieldDesc(name = "rxMinLength", desc = "rxMinLength")), // 0x8C
-      RegField( 6, cpuRdAddr,               RegFieldDesc(name = "cpuRdAddr", desc = "cpuRdAddr")), // 0x90
-      RegField( 1, cpuRdApply,              RegFieldDesc(name = "cpuRdApply", desc = "cpuRdApply")), // 0x94
-      RegField( 1, lineLoopEn,              RegFieldDesc(name = "lineLoopEn", desc = "lineLoopEn")), // 0x98
-      RegField(24, srcMacHigh,              RegFieldDesc(name = "srcMacHigh", desc = "Source MAC address higher bytes")), // 0x9C
-      RegField(24, srcMacLow,               RegFieldDesc(name = "srcMacLow", desc = "Source MAC address lower bytes")), // 0xA0
-      RegField(32, srcIp,                   RegFieldDesc(name = "srcIp", desc = "Source IP address")), // 0xA4
-      RegField(16, srcPort,                 RegFieldDesc(name = "srcPort", desc = "Source port number")), // 0xA8
-      RegField(24, dstMacHigh,              RegFieldDesc(name = "dstMacHigh", desc = "Destination MAC address higher bytes")), // 0xAC
-      RegField(24, dstMacLow,               RegFieldDesc(name = "dstMacLow", desc = "Destination MAC address lower bytes")), // 0xB0
-      RegField(32, dstIp,                   RegFieldDesc(name = "dstIp", desc = "Destination IP address")), // 0xB4
-      RegField(16, dstPort,                 RegFieldDesc(name = "dstPort", desc = "Destination port number")), // 0xB8
-      RegField(16, dstPort2,                RegFieldDesc(name = "dstPort2", desc = "Destination port 2 number")), // 0xBC
-      RegField(16, dstPort1PacketNum,       RegFieldDesc(name = "dstPort1PacketNum", desc = "Number of packets to destination port 1")), // 0xC0
-      RegField(16, dstPort2PacketNum,       RegFieldDesc(name = "dstPort2PacketNum", desc = "Number of packets to destination port 2")) // 0xC4
+      RegField( 5, fiAd,                    RegFieldDesc(name = "fiAd",                   desc = "MDIO PHY address")),                        // 0x00
+      RegField( 5, rgAd,                    RegFieldDesc(name = "rgAd",                   desc = "MDIO regiser address")),                    // 0x04
+      RegField(16, ctrlData,                RegFieldDesc(name = "ctrlData",               desc = "MDIO data")),                               // 0x08
+      RegField( 1, writeCtrlData,           RegFieldDesc(name = "writeCtrlData",          desc = "Write MDIO data")),                         // 0x0C
+      RegField( 1, noPreamble,              RegFieldDesc(name = "noPreamble",             desc = "No MDIO preamble")),                        // 0x10
+      RegField( 8, divider,                 RegFieldDesc(name = "divider",                desc = "MDIO clock divider")),                      // 0x14
+      RegField( 3, speed,                   RegFieldDesc(name = "speed",                  desc = "MAC Ethernet speed")),                      // 0x18
+      RegField( 1, fullDuplex,              RegFieldDesc(name = "fullDuplex",             desc = "Full duplex bus")),                         // 0x1C
+      RegField(16, packetSize,              RegFieldDesc(name = "packetSize",             desc = "Packet size")),                             // 0x20
+      RegField( 5, txHwmark,                RegFieldDesc(name = "txHwmark",               desc = "txHwmark")),                                // 0x24
+      RegField( 5, txLwmark,                RegFieldDesc(name = "txLwmark",               desc = "txLwmark")),                                // 0x28
+      RegField( 1, pauseFrameSendEn,        RegFieldDesc(name = "pauseFrameSendEn",       desc = "pauseFrameSendEn")),                        // 0x2C
+      RegField(16, pauseQuantaSet,          RegFieldDesc(name = "pauseQuantaSet",         desc = "pauseQuantaSet")),                          // 0x30
+      RegField( 6, ifgSet,                  RegFieldDesc(name = "ifgSet",                 desc = "ifgSet")),                                  // 0x34
+      RegField( 4, maxRetry,                RegFieldDesc(name = "maxRetry",               desc = "maxRetry")),                                // 0x38
+      RegField( 1, macTxAddEn,              RegFieldDesc(name = "macTxAddEn",             desc = "macTxAddEn")),                              // 0x3C
+      RegField( 8, macTxAddPromData,        RegFieldDesc(name = "macTxAddPromData",       desc = "macTxAddPromData")),                        // 0x40
+      RegField( 3, macTxAddPromAdd,         RegFieldDesc(name = "macTxAddPromAdd",        desc = "macTxAddPromAdd")),                         // 0x44
+      RegField( 1, macTxAddPromWr,          RegFieldDesc(name = "macTxAddPromWr",         desc = "macTxAddPromWr")),                          // 0x48
+      RegField( 1, txPauseEn,               RegFieldDesc(name = "txPauseEn",              desc = "txPauseEn")),                               // 0x4C
+      RegField( 1, xOffCpu,                 RegFieldDesc(name = "xOffCpu",                desc = "xOffCpu")),                                 // 0x50
+      RegField( 1, xOnCpu,                  RegFieldDesc(name = "xOnCpu",                 desc = "xOnCpu")),                                  // 0x54
+      RegField( 1, macRxAddChkEn,           RegFieldDesc(name = "macRxAddChkEn",          desc = "macRxAddChkEn")),                           // 0x58
+      RegField( 8, macRxAddPromData,        RegFieldDesc(name = "macRxAddPromData",       desc = "macRxAddPromData")),                        // 0x5C
+      RegField( 3, macRxAddPromAdd,         RegFieldDesc(name = "macRxAddPromAdd",        desc = "macRxAddPromAdd")),                         // 0x60
+      RegField( 1, macRxAddPromWr,          RegFieldDesc(name = "macRxAddPromWr",         desc = "macRxAddPromWr")),                          // 0x64
+      RegField( 1, broadcastFilterEn,       RegFieldDesc(name = "broadcastFilterEn",      desc = "broadcastFilterEn")),                       // 0x68
+      RegField(16, broadcastBucketDepth,    RegFieldDesc(name = "brodcastBucketDepth",    desc = "brodcastBucketDepth")),                     // 0x6C
+      RegField(16, broadcastBucketInterval, RegFieldDesc(name = "brodcastBucketInterval", desc = "brodcastBucketInterval")),                  // 0x70
+      RegField( 1, rxAppendCrc,             RegFieldDesc(name = "rxAppendCrc",            desc = "rxAppendCrc")),                             // 0x74
+      RegField( 5, rxHwmark,                RegFieldDesc(name = "rxHwmark",               desc = "rxHwmark")),                                // 0x78
+      RegField( 5, rxLwmark,                RegFieldDesc(name = "rxLwmark",               desc = "rxLwmark")),                                // 0x7C
+      RegField( 1, crcCheckEn,              RegFieldDesc(name = "crcCheckEn",             desc = "crcCheckEn")),                              // 0x80
+      RegField( 6, rxIfgSet,                RegFieldDesc(name = "rxIfgSet",               desc = "rxIfgSet")),                                // 0x84
+      RegField(16, rxMaxLength,             RegFieldDesc(name = "rxMaxLength",            desc = "rxMaxLength")),                             // 0x88
+      RegField( 7, rxMinLength,             RegFieldDesc(name = "rxMinLength",            desc = "rxMinLength")),                             // 0x8C
+      RegField( 6, cpuRdAddr,               RegFieldDesc(name = "cpuRdAddr",              desc = "cpuRdAddr")),                               // 0x90
+      RegField( 1, cpuRdApply,              RegFieldDesc(name = "cpuRdApply",             desc = "cpuRdApply")),                              // 0x94
+      RegField( 1, lineLoopEn,              RegFieldDesc(name = "lineLoopEn",             desc = "lineLoopEn")),                              // 0x98
+      RegField(24, srcMacHigh,              RegFieldDesc(name = "srcMacHigh",             desc = "Source MAC address higher bytes")),         // 0x9C
+      RegField(24, srcMacLow,               RegFieldDesc(name = "srcMacLow",              desc = "Source MAC address lower bytes")),          // 0xA0
+      RegField(32, srcIp,                   RegFieldDesc(name = "srcIp",                  desc = "Source IP address")),                       // 0xA4
+      RegField(16, srcPort,                 RegFieldDesc(name = "srcPort",                desc = "Source port number")),                      // 0xA8
+      RegField(24, dstMacHigh,              RegFieldDesc(name = "dstMacHigh",             desc = "Destination MAC address higher bytes")),    // 0xAC
+      RegField(24, dstMacLow,               RegFieldDesc(name = "dstMacLow",              desc = "Destination MAC address lower bytes")),     // 0xB0
+      RegField(32, dstIp,                   RegFieldDesc(name = "dstIp",                  desc = "Destination IP address")),                  // 0xB4
+      RegField(16, dstPort,                 RegFieldDesc(name = "dstPort",                desc = "Destination port number")),                 // 0xB8
+      RegField(16, dstPort2,                RegFieldDesc(name = "dstPort2",               desc = "Destination port 2 number")),               // 0xBC
+      RegField(16, dstPort1PacketNum,       RegFieldDesc(name = "dstPort1PacketNum",      desc = "Number of packets to destination port 1")), // 0xC0
+      RegField(16, dstPort2PacketNum,       RegFieldDesc(name = "dstPort2PacketNum",      desc = "Number of packets to destination port 2"))  // 0xC4
     )
     mem.get.regmap(fields.zipWithIndex.map({ case (f, i) => i * beatBytes -> Seq(f) }): _*)
 

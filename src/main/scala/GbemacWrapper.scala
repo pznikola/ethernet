@@ -93,18 +93,18 @@ class GbEMAC extends BlackBox with HasBlackBoxResource {
   addResource("oddr.v")
   addResource("rgmii_phy_if.v")
   addResource("ssio_ddr_in.v")
-  // Added RTL
-  addResource("AXI4StreamWidthAdapter1to4.v")
-  addResource("AXI4StreamWidthAdapter4to1.v")
   // From Alex axis
   addResource("axis_adapter.v")
   addResource("axis_async_fifo.v")
   addResource("axis_async_fifo_adapter.v")
-  
+  // From OpenCores
   addResource("eth_clockgen.v")
   addResource("eth_miim.v")
   addResource("eth_outputcontrol.v")
   addResource("eth_shiftreg.v")
+  // Added RTL
+  addResource("AXI4StreamWidthAdapter1to4.v")
+  addResource("AXI4StreamWidthAdapter4to1.v")
   addResource("packet_creation_udp_8b.v")
   addResource("phy_chip_conf_fsm.v")
   addResource("GbEMAC.v")

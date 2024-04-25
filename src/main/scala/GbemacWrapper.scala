@@ -2,7 +2,6 @@ package ethernet
 
 import chisel3._
 import chisel3.util._
-import chisel3.experimental.Analog
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.amba.axi4._
 import freechips.rocketchip.amba.axi4stream._
@@ -11,75 +10,39 @@ import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
 
 class GbEMAC extends BlackBox with HasBlackBoxResource {
   val io = IO(new Bundle {
-    val clk                     = Input(Clock())
-    val clk125                  = Input(Clock())
-    val clk125_90               = Input(Clock())
-    val clk5                    = Input(Clock())
-    val reset                   = Input(Bool())
+    val clk                = Input(Clock())
+    val clk125             = Input(Clock())
+    val clk125_90          = Input(Clock())
+    val reset              = Input(Bool())
 
-    val tx_streaming_data       = Input(UInt(32.W))
-    val tx_streaming_valid      = Input(Bool())
-    val tx_streaming_last       = Input(Bool())
-    val tx_streaming_ready      = Output(Bool())
+    val tx_streaming_data  = Input(UInt(32.W))
+    val tx_streaming_valid = Input(Bool())
+    val tx_streaming_last  = Input(Bool())
+    val tx_streaming_ready = Output(Bool())
 
-    val phy_resetn              = Output(Bool())
-    val rgmii_txd               = Output(UInt(4.W))
-    val rgmii_tx_ctl            = Output(Bool())
-    val rgmii_txc               = Output(Bool())
-    val rgmii_rxd               = Input(UInt(4.W))
-    val rgmii_rx_ctl            = Input(Bool())
-    val rgmii_rxc               = Input(Bool())
-    val mdio                    = Analog(1.W)
-    val mdc                     = Output(Bool())
+    val rx_streaming_data  = Output(UInt(32.W))
+    val rx_streaming_valid = Output(Bool())
+    val rx_streaming_last  = Output(Bool())
+    val rx_streaming_ready = Input(Bool())
 
-    val txHwmark                = Input(UInt(5.W))
-    val txLwmark                = Input(UInt(5.W))
-    val pauseFrameSendEn        = Input(Bool())
-    val pauseQuantaSet          = Input(UInt(16.W))
-    val macTxAddEn              = Input(Bool())
-    val fullDuplex              = Input(Bool())
-    val maxRetry                = Input(UInt(4.W))
-    val ifgSet                  = Input(UInt(6.W))
-    val macTxAddPromData        = Input(UInt(8.W))
-    val macTxAddPromAdd         = Input(UInt(3.W))
-    val macTxAddPromWr          = Input(Bool())
-    val txPauseEn               = Input(Bool())
-    val xOffCpu                 = Input(Bool())
-    val xOnCpu                  = Input(Bool())
-    val macRxAddChkEn           = Input(Bool())
-    val macRxAddPromData        = Input(UInt(8.W))
-    val macRxAddPromAdd         = Input(UInt(3.W))
-    val macRxAddPromWr          = Input(Bool())
-    val broadcastFilterEn       = Input(Bool())
-    val broadcastBucketDepth    = Input(UInt(16.W))
-    val broadcastBucketInterval = Input(UInt(16.W))
-    val rxAppendCrc             = Input(Bool())
-    val rxHwmark                = Input(UInt(5.W))
-    val rxLwmark                = Input(UInt(5.W))
-    val crcCheckEn              = Input(Bool())
-    val rxIfgSet                = Input(UInt(6.W))
-    val rxMaxLength             = Input(UInt(16.W))
-    val rxMinLength             = Input(UInt(7.W))
-    val cpuRdAddr               = Input(UInt(6.W))
-    val cpuRdApply              = Input(Bool())
-    val lineLoopEn              = Input(Bool())
-    val speed                   = Input(UInt(3.W))
-    val divider                 = Input(UInt(8.W))
-    val ctrlData                = Input(UInt(16.W))
-    val rgAd                    = Input(UInt(5.W))
-    val fiAd                    = Input(UInt(5.W))
-    val writeCtrlData           = Input(Bool())
-    val noPreamble              = Input(Bool())
-    val packetSize              = Input(UInt(16.W))
-    val srcMac                  = Input(UInt(48.W))
-    val srcIp                   = Input(UInt(32.W))
-    val srcPort                 = Input(UInt(16.W))
-    val dstMac                  = Input(UInt(48.W))
-    val dstIp                   = Input(UInt(32.W))
-    val dstPort                 = Input(UInt(16.W))
-    val dstPort2                = Input(UInt(16.W))
-    val dstPort1PacketNum       = Input(UInt(16.W))
-    val dstPort2PacketNum       = Input(UInt(16.W))
+    val phy_resetn         = Output(Bool())
+    val rgmii_txd          = Output(UInt(4.W))
+    val rgmii_tx_ctl       = Output(Bool())
+    val rgmii_txc          = Output(Bool())
+    val rgmii_rxd          = Input(UInt(4.W))
+    val rgmii_rx_ctl       = Input(Bool())
+    val rgmii_rxc          = Input(Bool())
+
+    val packetSize         = Input(UInt(16.W))
+    val srcMac             = Input(UInt(48.W))
+    val srcIp              = Input(UInt(32.W))
+    val srcPort            = Input(UInt(16.W))
+    val dstMac             = Input(UInt(48.W))
+    val dstIp              = Input(UInt(32.W))
+    val dstPort            = Input(UInt(16.W))
+    val dstPort2           = Input(UInt(16.W))
+    val dstPort1PacketNum  = Input(UInt(16.W))
+    val dstPort2PacketNum  = Input(UInt(16.W))
   })
 
   // From Alex ethernet
@@ -97,23 +60,16 @@ class GbEMAC extends BlackBox with HasBlackBoxResource {
   addResource("axis_adapter.v")
   addResource("axis_async_fifo.v")
   addResource("axis_async_fifo_adapter.v")
-  // From OpenCores
-  addResource("eth_clockgen.v")
-  addResource("eth_miim.v")
-  addResource("eth_outputcontrol.v")
-  addResource("eth_shiftreg.v")
   // Added RTL
   addResource("AXI4StreamWidthAdapter1to4.v")
   addResource("AXI4StreamWidthAdapter4to1.v")
-  addResource("packet_creation_udp_8b.v")
-  addResource("phy_chip_conf_fsm.v")
+  addResource("packet_creation_udp.v")
   addResource("GbEMAC.v")
 }
 
 class GbemacWrapperIO() extends Bundle {
   val clk125       = Input(Clock())
   val clk125_90    = Input(Clock())
-  val clk5         = Input(Clock())
   val phy_resetn   = Output(Bool())
   val rgmii_txd    = Output(UInt(4.W))
   val rgmii_tx_ctl = Output(Bool())
@@ -121,8 +77,6 @@ class GbemacWrapperIO() extends Bundle {
   val rgmii_rxd    = Input(UInt(4.W))
   val rgmii_rx_ctl = Input(Bool())
   val rgmii_rxc    = Input(Bool())
-  val mdio         = Analog(1.W)
-  val mdc          = Output(Bool())
 }
 
 class GbemacWrapper(csrAddress: AddressSet, beatBytes: Int) extends LazyModule()(Parameters.empty) {
@@ -141,7 +95,7 @@ class GbemacWrapper(csrAddress: AddressSet, beatBytes: Int) extends LazyModule()
   val mem = Some(AXI4IdentityNode())
   configBlock.mem.get := mem.get
   // Stream Node
-  val streamNode = Some(AXI4StreamSlaveNode(AXI4StreamSlaveParameters()))
+  val streamNode = AXI4StreamIdentityNode()
   // IO
   lazy val io: GbemacWrapperIO = IO(new GbemacWrapperIO)
 
@@ -149,75 +103,39 @@ class GbemacWrapper(csrAddress: AddressSet, beatBytes: Int) extends LazyModule()
 
     val gbemac: GbEMAC = Module(new GbEMAC())
 
-    gbemac.io.clk                     := clock
-    gbemac.io.clk125                  := io.clk125
-    gbemac.io.clk125_90               := io.clk125_90
-    gbemac.io.clk5                    := io.clk5
-    gbemac.io.reset                   := reset
+    gbemac.io.clk                    := clock
+    gbemac.io.clk125                 := io.clk125
+    gbemac.io.clk125_90              := io.clk125_90
+    gbemac.io.reset                  := reset
 
-    io.phy_resetn                     := gbemac.io.phy_resetn
-    io.rgmii_txd                      := gbemac.io.rgmii_txd
-    io.rgmii_tx_ctl                   := gbemac.io.rgmii_tx_ctl
-    io.rgmii_txc                      := gbemac.io.rgmii_txc
-    gbemac.io.rgmii_rxd               := io.rgmii_rxd
-    gbemac.io.rgmii_rx_ctl            := io.rgmii_rx_ctl
-    gbemac.io.rgmii_rxc               := io.rgmii_rxc
-    gbemac.io.mdio                    <> io.mdio
-    io.mdc                            := gbemac.io.mdc
+    io.phy_resetn                    := gbemac.io.phy_resetn
+    io.rgmii_txd                     := gbemac.io.rgmii_txd
+    io.rgmii_tx_ctl                  := gbemac.io.rgmii_tx_ctl
+    io.rgmii_txc                     := gbemac.io.rgmii_txc
+    gbemac.io.rgmii_rxd              := io.rgmii_rxd
+    gbemac.io.rgmii_rx_ctl           := io.rgmii_rx_ctl
+    gbemac.io.rgmii_rxc              := io.rgmii_rxc
 
-    gbemac.io.tx_streaming_data       := streamNode.get.in.head._1.bits.data
-    gbemac.io.tx_streaming_valid      := streamNode.get.in.head._1.valid
-    gbemac.io.tx_streaming_last       := streamNode.get.in.head._1.bits.last
-    streamNode.get.in.head._1.ready   := gbemac.io.tx_streaming_ready
+    gbemac.io.tx_streaming_data      := streamNode.in.head._1.bits.data
+    gbemac.io.tx_streaming_valid     := streamNode.in.head._1.valid
+    gbemac.io.tx_streaming_last      := streamNode.in.head._1.bits.last
+    streamNode.in.head._1.ready      := gbemac.io.tx_streaming_ready
 
-    gbemac.io.txHwmark                := configBlock.ioReg.txHwmark
-    gbemac.io.txLwmark                := configBlock.ioReg.txLwmark
-    gbemac.io.pauseFrameSendEn        := configBlock.ioReg.pauseFrameSendEn
-    gbemac.io.pauseQuantaSet          := configBlock.ioReg.pauseQuantaSet
-    gbemac.io.ifgSet                  := configBlock.ioReg.ifgSet
-    gbemac.io.fullDuplex              := configBlock.ioReg.fullDuplex
-    gbemac.io.maxRetry                := configBlock.ioReg.maxRetry
-    gbemac.io.macTxAddEn              := configBlock.ioReg.macTxAddEn
-    gbemac.io.macTxAddPromData        := configBlock.ioReg.macTxAddPromData
-    gbemac.io.macTxAddPromAdd         := configBlock.ioReg.macTxAddPromAdd
-    gbemac.io.macTxAddPromWr          := configBlock.ioReg.macTxAddPromWr
-    gbemac.io.txPauseEn               := configBlock.ioReg.txPauseEn
-    gbemac.io.xOffCpu                 := configBlock.ioReg.xOffCpu
-    gbemac.io.xOnCpu                  := configBlock.ioReg.xOnCpu
-    gbemac.io.macRxAddChkEn           := configBlock.ioReg.macRxAddChkEn
-    gbemac.io.macRxAddPromData        := configBlock.ioReg.macRxAddPromData
-    gbemac.io.macRxAddPromAdd         := configBlock.ioReg.macRxAddPromAdd
-    gbemac.io.macRxAddPromWr          := configBlock.ioReg.macRxAddPromWr
-    gbemac.io.broadcastFilterEn       := configBlock.ioReg.broadcastFilterEn
-    gbemac.io.broadcastBucketDepth    := configBlock.ioReg.broadcastBucketDepth
-    gbemac.io.broadcastBucketInterval := configBlock.ioReg.broadcastBucketInterval
-    gbemac.io.rxAppendCrc             := configBlock.ioReg.rxAppendCrc
-    gbemac.io.rxHwmark                := configBlock.ioReg.rxHwmark
-    gbemac.io.rxLwmark                := configBlock.ioReg.rxLwmark
-    gbemac.io.crcCheckEn              := configBlock.ioReg.crcCheckEn
-    gbemac.io.rxIfgSet                := configBlock.ioReg.rxIfgSet
-    gbemac.io.rxMaxLength             := configBlock.ioReg.rxMaxLength
-    gbemac.io.rxMinLength             := configBlock.ioReg.rxMinLength
-    gbemac.io.cpuRdAddr               := configBlock.ioReg.cpuRdAddr
-    gbemac.io.cpuRdApply              := configBlock.ioReg.cpuRdApply
-    gbemac.io.lineLoopEn              := configBlock.ioReg.lineLoopEn
-    gbemac.io.speed                   := configBlock.ioReg.speed
-    gbemac.io.divider                 := configBlock.ioReg.divider
-    gbemac.io.ctrlData                := configBlock.ioReg.ctrlData
-    gbemac.io.rgAd                    := configBlock.ioReg.rgAd
-    gbemac.io.fiAd                    := configBlock.ioReg.fiAd
-    gbemac.io.writeCtrlData           := configBlock.ioReg.writeCtrlData
-    gbemac.io.noPreamble              := configBlock.ioReg.noPreamble
-    gbemac.io.packetSize              := configBlock.ioReg.packetSize
-    gbemac.io.srcMac                  := configBlock.ioReg.srcMac
-    gbemac.io.srcIp                   := configBlock.ioReg.srcIp
-    gbemac.io.srcPort                 := configBlock.ioReg.srcPort
-    gbemac.io.dstMac                  := configBlock.ioReg.dstMac
-    gbemac.io.dstIp                   := configBlock.ioReg.dstIp
-    gbemac.io.dstPort                 := configBlock.ioReg.dstPort
-    gbemac.io.dstPort2                := configBlock.ioReg.dstPort2
-    gbemac.io.dstPort1PacketNum       := configBlock.ioReg.dstPort1PacketNum
-    gbemac.io.dstPort2PacketNum       := configBlock.ioReg.dstPort2PacketNum
+    streamNode.out.head._1.bits.data := gbemac.io.rx_streaming_data
+    streamNode.out.head._1.valid     := gbemac.io.rx_streaming_valid
+    streamNode.out.head._1.bits.last := gbemac.io.rx_streaming_last
+    gbemac.io.rx_streaming_ready     := streamNode.out.head._1.ready
+
+    gbemac.io.packetSize             := configBlock.ioReg.packetSize
+    gbemac.io.srcMac                 := configBlock.ioReg.srcMac
+    gbemac.io.srcIp                  := configBlock.ioReg.srcIp
+    gbemac.io.srcPort                := configBlock.ioReg.srcPort
+    gbemac.io.dstMac                 := configBlock.ioReg.dstMac
+    gbemac.io.dstIp                  := configBlock.ioReg.dstIp
+    gbemac.io.dstPort                := configBlock.ioReg.dstPort
+    gbemac.io.dstPort2               := configBlock.ioReg.dstPort2
+    gbemac.io.dstPort1PacketNum      := configBlock.ioReg.dstPort1PacketNum
+    gbemac.io.dstPort2PacketNum      := configBlock.ioReg.dstPort2PacketNum
   }
 }
 
@@ -233,8 +151,11 @@ class GbemacWrapperBlock(csrAddress: AddressSet, beatBytes: Int)(implicit p: Par
   }
   // Stream Node
   val ioInNode = BundleBridgeSource(() => new AXI4StreamBundle(AXI4StreamBundleParameters(n = 4)))
-  streamNode.get := BundleBridgeToAXI4Stream(AXI4StreamMasterParameters(n = 4)) := ioInNode
-  val in = InModuleBody { ioInNode.makeIO() }
+  val ioOutNode = BundleBridgeSink[AXI4StreamBundle]()
+  ioOutNode  := AXI4StreamToBundleBridge(AXI4StreamSlaveParameters())       := streamNode
+  streamNode := BundleBridgeToAXI4Stream(AXI4StreamMasterParameters(n = 4)) := ioInNode
+  val in  = InModuleBody { ioInNode.makeIO() }
+  val out = InModuleBody { ioOutNode.makeIO() }
 }
 
 object GbemacWrapperBlockApp extends App {

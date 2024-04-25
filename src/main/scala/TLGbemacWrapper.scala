@@ -9,10 +9,29 @@ import org.chipsalliance.cde.config.Parameters
 import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
 
 class TLGbemacWrapper(csrAddress: AddressSet, beatBytes: Int) extends LazyModule()(Parameters.empty) {
+
+  val configBlock = LazyModule(new TemacConfig(csrAddress, beatBytes) {
+    def makeIO2(): TemacConfigIO = {
+      val io2: TemacConfigIO = IO(io.cloneType)
+      io2.suggestName("ioReg")
+      io2 <> io
+      io2
+    }
+
+    val ioReg: ModuleValue[TemacConfigIO] = InModuleBody {
+      makeIO2()
+    }
+  })
+
+  // Nodes
+  val mem: Option[TLIdentityNode] = Some(TLIdentityNode())
+  val streamNode: AXI4StreamIdentityNode = AXI4StreamIdentityNode()
+  configBlock.mem.get := AXI4UserYanker() := AXI4Deinterleaver(64) := TLToAXI4() := mem.get
+
+  // IOs
   lazy val io: GbemacWrapperIO = IO(new GbemacWrapperIO)
 
   lazy val module: LazyModuleImp = new LazyModuleImp(this) {
-
     val gbemac: GbEMAC = Module(new GbEMAC())
 
     gbemac.io.clk                    := clock
@@ -49,20 +68,6 @@ class TLGbemacWrapper(csrAddress: AddressSet, beatBytes: Int) extends LazyModule
     gbemac.io.dstPort1PacketNum      := configBlock.ioReg.dstPort1PacketNum
     gbemac.io.dstPort2PacketNum      := configBlock.ioReg.dstPort2PacketNum
   }
-  val configBlock = LazyModule(new TemacConfig(csrAddress, beatBytes) {
-    def makeIO2(): TemacConfigIO = {
-      val io2: TemacConfigIO = IO(io.cloneType)
-      io2.suggestName("ioReg")
-      io2 <> io
-      io2
-    }
-    val ioReg: ModuleValue[TemacConfigIO] = InModuleBody { makeIO2() }
-  })
-
-  val mem:        Option[TLIdentityNode] = Some(TLIdentityNode())
-  val streamNode: AXI4StreamIdentityNode = AXI4StreamIdentityNode()
-
-  configBlock.mem.get := AXI4UserYanker() := AXI4Deinterleaver(64) := TLToAXI4() := mem.get
 }
 
 class TLGbemacWrapperBlock(csrAddress: AddressSet, beatBytes: Int)(implicit p: Parameters)

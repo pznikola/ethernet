@@ -80,7 +80,6 @@ class GbemacWrapperIO() extends Bundle {
 }
 
 class GbemacWrapper(csrAddress: AddressSet, beatBytes: Int) extends LazyModule()(Parameters.empty) {
-
   val configBlock = LazyModule(new TemacConfig(csrAddress, beatBytes) {
     def makeIO2(): TemacConfigIO = {
       val io2: TemacConfigIO = IO(io.cloneType)
@@ -91,16 +90,15 @@ class GbemacWrapper(csrAddress: AddressSet, beatBytes: Int) extends LazyModule()
     val ioReg = InModuleBody { makeIO2() }
   })
 
-  // Memory Node
-  val mem = Some(AXI4IdentityNode())
+  // Nodes
+  val mem: Option[AXI4IdentityNode] = Some(AXI4IdentityNode())
+  val streamNode: AXI4StreamIdentityNode = AXI4StreamIdentityNode()
   configBlock.mem.get := mem.get
-  // Stream Node
-  val streamNode = AXI4StreamIdentityNode()
+
   // IO
   lazy val io: GbemacWrapperIO = IO(new GbemacWrapperIO)
 
   lazy val module: LazyModuleImp = new LazyModuleImp(this) {
-
     val gbemac: GbEMAC = Module(new GbEMAC())
 
     gbemac.io.clk                    := clock

@@ -1,83 +1,39 @@
 `timescale 1ns / 1ps
 
 module GbEMAC (
-    input         clk                    ,
-    input         clk125                 ,
-    input         clk125_90              ,
-    input         clk5                   ,
-    input         reset                  ,
+    input         clk                ,
+    input         clk125             ,
+    input         clk125_90          ,
+    input         reset              ,
 
-    input  [31:0] tx_streaming_data      ,
-    input         tx_streaming_valid     ,
-    input         tx_streaming_last      ,
-    output        tx_streaming_ready     ,
-    output [31:0] rx_streaming_data      ,
-    output        rx_streaming_valid     ,
-    output        rx_streaming_last      ,
-    input         rx_streaming_ready     ,
+    input  [31:0] tx_streaming_data  ,
+    input         tx_streaming_valid ,
+    input         tx_streaming_last  ,
+    output        tx_streaming_ready ,
+    output [31:0] rx_streaming_data  ,
+    output        rx_streaming_valid ,
+    output        rx_streaming_last  ,
+    input         rx_streaming_ready ,
 
-    output        phy_resetn             ,
-    output [ 3:0] rgmii_txd              ,
-    output        rgmii_tx_ctl           ,
-    output        rgmii_txc              ,
-    input  [ 3:0] rgmii_rxd              ,
-    input         rgmii_rx_ctl           ,
-    input         rgmii_rxc              ,
-    inout         mdio                   ,
-    output        mdc                    ,
+    output        phy_resetn         ,
+    output [ 3:0] rgmii_txd          ,
+    output        rgmii_tx_ctl       ,
+    output        rgmii_txc          ,
+    input  [ 3:0] rgmii_rxd          ,
+    input         rgmii_rx_ctl       ,
+    input         rgmii_rxc          ,
 
-    input  [ 4:0] txHwmark               ,
-    input  [ 4:0] txLwmark               ,
-    input         pauseFrameSendEn       ,
-    input  [15:0] pauseQuantaSet         ,
-    input         macTxAddEn             ,
-    input         fullDuplex             ,
-    input  [ 3:0] maxRetry               ,
-    input  [ 5:0] ifgSet                 ,
-    input  [ 7:0] macTxAddPromData       ,
-    input  [ 2:0] macTxAddPromAdd        ,
-    input         macTxAddPromWr         ,
-    input         txPauseEn              ,
-    input         xOffCpu                ,
-    input         xOnCpu                 ,
-    input         macRxAddChkEn          ,
-    input  [ 7:0] macRxAddPromData       ,
-    input  [ 2:0] macRxAddPromAdd        ,
-    input         macRxAddPromWr         ,
-    input         broadcastFilterEn      ,
-    input  [15:0] broadcastBucketDepth   ,
-    input  [15:0] broadcastBucketInterval,
-    input         rxAppendCrc            ,
-    input  [ 4:0] rxHwmark               ,
-    input  [ 4:0] rxLwmark               ,
-    input         crcCheckEn             ,
-    input  [ 5:0] rxIfgSet               ,
-    input  [15:0] rxMaxLength            ,
-    input  [ 6:0] rxMinLength            ,
-    input  [ 5:0] cpuRdAddr              ,
-    input         cpuRdApply             ,
-    input         lineLoopEn             ,
-    input  [ 2:0] speed                  ,
-    input  [ 7:0] divider                ,
-    input  [15:0] ctrlData               ,
-    input  [ 4:0] rgAd                   ,
-    input  [ 4:0] fiAd                   ,
-    input         writeCtrlData          ,
-    input         noPreamble             ,
-    input  [15:0] packetSize             ,
-    input  [47:0] srcMac                 ,
-    input  [31:0] srcIp                  ,
-    input  [15:0] srcPort                ,
-    input  [47:0] dstMac                 ,
-    input  [31:0] dstIp                  ,
-    input  [15:0] dstPort                ,
-    input  [15:0] dstPort2               ,
-    input  [15:0] dstPort1PacketNum      ,
+    input  [15:0] packetSize         ,
+    input  [47:0] srcMac             ,
+    input  [31:0] srcIp              ,
+    input  [15:0] srcPort            ,
+    input  [47:0] dstMac             ,
+    input  [31:0] dstIp              ,
+    input  [15:0] dstPort            ,
+    input  [15:0] dstPort2           ,
+    input  [15:0] dstPort1PacketNum  ,
     input  [15:0] dstPort2PacketNum
 );
-
-
-wire mdo, mdi, mdoEn;
 
 wire [7:0] tx_data_8b;
 wire tx_valid_8b;
@@ -102,16 +58,6 @@ wire rx_streaming_last_8b;
 wire [31:0] tx_streaming_data_reordered;
 wire [31:0] rx_streaming_data_reordered;
 
-wire gtxClk;
-
-wire [15:0] ctrlData_fsm;
-wire [ 4:0] rgAd_fsm;
-wire writeCtrlData_fsm;
-
-wire RStat    = 1'b0;
-wire ScanStat = 1'b0;
-
-assign mdio       = mdoEn ? mdo: 1'bz;
 assign phy_resetn = 1'b1;
 
 reg [15:0] counter_for_last;
@@ -179,14 +125,6 @@ packet_creation_udp protocol_ctrl (
     .rx_streaming_last     (rx_streaming_last_8b)
 );
 
-phy_chip_conf_fsm phy_conf(
-    .clk                   (clk),
-    .reset                 (reset),
-    .ctrlData              (ctrlData_fsm),
-    .rgAd                  (rgAd_fsm),
-    .writeCtrlData         (writeCtrlData_fsm)
-);
-
 AXI4StreamWidthAdapter4to1 width_1_4(
     .clock                 (clk),
     .reset                 (reset),
@@ -211,30 +149,6 @@ AXI4StreamWidthAdapter1to4 width_4_1(
     .out_0_valid           (tx_streaming_valid_8b),
     .out_0_bits_data       (tx_streaming_data_8b),
     .out_0_bits_last       (tx_streaming_last_8b)
-);
-
-eth_miim U_eth_miim(
-    .Clk                   (clk5),
-    .Reset                 (reset),
-    .Divider               (divider),
-    .NoPre                 (noPreamble),
-    .CtrlData              (ctrlData_fsm),
-    .Rgad                  (rgAd_fsm),
-    .Fiad                  (fiAd),
-    .WCtrlData             (writeCtrlData_fsm),
-    .RStat                 (RStat),
-    .ScanStat              (ScanStat),
-    .Mdo                   (mdo),
-    .MdoEn                 (mdoEn),
-    .Mdi                   (mdi),
-    .Mdc                   (mdc),
-    .Busy                  ( ),
-    .Prsd                  ( ),
-    .LinkFail              ( ),
-    .Nvalid                ( ),
-    .WCtrlDataStart        ( ),
-    .RStatStart            ( ),
-    .UpdateMIIRX_DATAReg   ( )
 );
 
 eth_mac_1g_rgmii_fifo #(

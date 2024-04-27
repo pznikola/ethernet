@@ -27,32 +27,32 @@ class TemacConfig(csrAddress: AddressSet, beatBytes:  Int) extends LazyModule()(
   val mem = Some(AXI4RegisterNode(address = csrAddress, beatBytes = beatBytes))
 
   lazy val module = new LazyModuleImp(this) {
-    val packetSize        = WireDefault(UInt(16.W), 1024.U)
-    val srcMacHigh        = WireDefault(UInt(24.W), 0.U)
-    val srcMacLow         = WireDefault(UInt(24.W), 0.U)
-    val srcIp             = WireDefault(UInt(32.W), 0.U)
-    val srcPort           = WireDefault(UInt(16.W), 0.U)
-    val dstMacHigh        = WireDefault(UInt(24.W), 0.U)
-    val dstMacLow         = WireDefault(UInt(24.W), 0.U)
-    val dstIp             = WireDefault(UInt(32.W), 0.U)
-    val dstPort           = WireDefault(UInt(16.W), 0.U)
-    val dstPort2          = WireDefault(UInt(16.W), 0.U)
-    val dstPort1PacketNum = WireDefault(UInt(16.W), 16.U)
-    val dstPort2PacketNum = WireDefault(UInt(16.W), 16.U)
+    val packetSize        = RegInit(UInt(16.W), 1024.U)
+    val srcMacHigh        = RegInit(UInt(24.W), 0.U)
+    val srcMacLow         = RegInit(UInt(24.W), 0.U)
+    val srcIp             = RegInit(UInt(32.W), 0.U)
+    val srcPort           = RegInit(UInt(16.W), 0.U)
+    val dstMacHigh        = RegInit(UInt(24.W), 0.U)
+    val dstMacLow         = RegInit(UInt(24.W), 0.U)
+    val dstIp             = RegInit(UInt(32.W), 0.U)
+    val dstPort           = RegInit(UInt(16.W), 0.U)
+    val dstPort2          = RegInit(UInt(16.W), 0.U)
+    val dstPort1PacketNum = RegInit(UInt(16.W), 16.U)
+    val dstPort2PacketNum = RegInit(UInt(16.W), 16.U)
 
     val fields: Seq[RegField] = Seq(
-      RegField.w(16, packetSize,        RegFieldDesc(name = "packetSize",        desc = "Packet size")),                             // 0x20
-      RegField.w(24, srcMacHigh,        RegFieldDesc(name = "srcMacHigh",        desc = "Source MAC address higher bytes")),         // 0x9C
-      RegField.w(24, srcMacLow,         RegFieldDesc(name = "srcMacLow",         desc = "Source MAC address lower bytes")),          // 0xA0
-      RegField.w(32, srcIp,             RegFieldDesc(name = "srcIp",             desc = "Source IP address")),                       // 0xA4
-      RegField.w(16, srcPort,           RegFieldDesc(name = "srcPort",           desc = "Source port number")),                      // 0xA8
-      RegField.w(24, dstMacHigh,        RegFieldDesc(name = "dstMacHigh",        desc = "Destination MAC address higher bytes")),    // 0xAC
-      RegField.w(24, dstMacLow,         RegFieldDesc(name = "dstMacLow",         desc = "Destination MAC address lower bytes")),     // 0xB0
-      RegField.w(32, dstIp,             RegFieldDesc(name = "dstIp",             desc = "Destination IP address")),                  // 0xB4
-      RegField.w(16, dstPort,           RegFieldDesc(name = "dstPort",           desc = "Destination port number")),                 // 0xB8
-      RegField.w(16, dstPort2,          RegFieldDesc(name = "dstPort2",          desc = "Destination port 2 number")),               // 0xBC
-      RegField.w(16, dstPort1PacketNum, RegFieldDesc(name = "dstPort1PacketNum", desc = "Number of packets to destination port 1")), // 0xC0
-      RegField.w(16, dstPort2PacketNum, RegFieldDesc(name = "dstPort2PacketNum", desc = "Number of packets to destination port 2"))  // 0xC4
+      RegField.w(16, packetSize,        RegFieldDesc(name = "packetSize",        desc = "Packet size")),                             // 0x00
+      RegField.w(24, srcMacHigh,        RegFieldDesc(name = "srcMacHigh",        desc = "Source MAC address higher bytes")),         // 0x04
+      RegField.w(24, srcMacLow,         RegFieldDesc(name = "srcMacLow",         desc = "Source MAC address lower bytes")),          // 0x08
+      RegField.w(32, srcIp,             RegFieldDesc(name = "srcIp",             desc = "Source IP address")),                       // 0x0A
+      RegField.w(16, srcPort,           RegFieldDesc(name = "srcPort",           desc = "Source port number")),                      // 0x10
+      RegField.w(24, dstMacHigh,        RegFieldDesc(name = "dstMacHigh",        desc = "Destination MAC address higher bytes")),    // 0x14
+      RegField.w(24, dstMacLow,         RegFieldDesc(name = "dstMacLow",         desc = "Destination MAC address lower bytes")),     // 0x18
+      RegField.w(32, dstIp,             RegFieldDesc(name = "dstIp",             desc = "Destination IP address")),                  // 0x1A
+      RegField.w(16, dstPort,           RegFieldDesc(name = "dstPort",           desc = "Destination port number")),                 // 0x20
+      RegField.w(16, dstPort2,          RegFieldDesc(name = "dstPort2",          desc = "Destination port 2 number")),               // 0x24
+      RegField.w(16, dstPort1PacketNum, RegFieldDesc(name = "dstPort1PacketNum", desc = "Number of packets to destination port 1")), // 0x28
+      RegField.w(16, dstPort2PacketNum, RegFieldDesc(name = "dstPort2PacketNum", desc = "Number of packets to destination port 2"))  // 0x2A
     )
     mem.get.regmap(fields.zipWithIndex.map({ case (f, i) => i * beatBytes -> Seq(f) }): _*)
 

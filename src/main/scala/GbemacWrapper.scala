@@ -1,12 +1,14 @@
 package ethernet
 
 import chisel3._
+import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
 import chisel3.util._
-import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.amba.axi4._
 import freechips.rocketchip.amba.axi4stream._
+import freechips.rocketchip.diplomacy.AddressSet
 import org.chipsalliance.cde.config.Parameters
-import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
+import org.chipsalliance.diplomacy.bundlebridge.{BundleBridgeSink, BundleBridgeSource}
+import org.chipsalliance.diplomacy.lazymodule.{InModuleBody, LazyModule, LazyModuleImp}
 
 class GbEMAC extends BlackBox with HasBlackBoxResource {
   val io = IO(new Bundle {

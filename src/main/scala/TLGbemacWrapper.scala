@@ -30,10 +30,11 @@ class TLGbemacWrapper(csrAddress: AddressSet, beatBytes: Int) extends LazyModule
   val streamNode: AXI4StreamIdentityNode = AXI4StreamIdentityNode()
   configBlock.mem.get := AXI4UserYanker() := AXI4Deinterleaver(64) := TLToAXI4() := mem.get
 
-  // IOs
-  lazy val io: GbemacWrapperIO = IO(new GbemacWrapperIO)
+  lazy val module = new Impl
+  class Impl extends LazyModuleImp(this) {
+    // IOs
+    val io: GbemacWrapperIO = IO(new GbemacWrapperIO)
 
-  lazy val module: LazyModuleImp = new LazyModuleImp(this) {
     val gbemac: GbEMAC = Module(new GbEMAC())
 
     gbemac.io.clk                    := clock

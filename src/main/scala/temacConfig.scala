@@ -4,13 +4,13 @@ import chisel3._
 import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
 import chisel3.util._
 import freechips.rocketchip.amba.axi4._
-import freechips.rocketchip.diplomacy.AddressSet
+import freechips.rocketchip.diplomacy.{AddressSet, SimpleDevice}
 import freechips.rocketchip.regmapper._
 import org.chipsalliance.cde.config.Parameters
 import org.chipsalliance.diplomacy.bundlebridge.BundleBridgeSource
 import org.chipsalliance.diplomacy.lazymodule.{InModuleBody, LazyModule, LazyModuleImp}
 
-class TemacConfigIO() extends Bundle {
+class TemacConfigIO extends Bundle {
   val packetSize        = Output(UInt(16.W))
   val srcMac            = Output(UInt(48.W))
   val srcIp             = Output(UInt(32.W))
@@ -24,6 +24,9 @@ class TemacConfigIO() extends Bundle {
 }
 
 class TemacConfig(csrAddress: AddressSet, beatBytes:  Int) extends LazyModule()(Parameters.empty) {
+  // DTS
+  val dtsdevice = new SimpleDevice("ethernet", Seq("chipyard, ethernet"))
+
   lazy val io = Wire(new TemacConfigIO)
 
   val mem = Some(AXI4RegisterNode(address = csrAddress, beatBytes = beatBytes))

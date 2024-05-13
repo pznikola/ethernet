@@ -69,7 +69,7 @@ class GbEMAC extends BlackBox with HasBlackBoxResource {
   addResource("GbEMAC.v")
 }
 
-class GbemacWrapperIO() extends Bundle {
+class GbemacWrapperIO extends Bundle {
   val clk125       = Input(Clock())
   val clk125_90    = Input(Clock())
   val phy_resetn   = Output(Bool())

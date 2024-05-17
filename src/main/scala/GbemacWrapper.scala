@@ -17,12 +17,12 @@ class GbEMAC extends BlackBox with HasBlackBoxResource {
     val clk125_90          = Input(Clock())
     val reset              = Input(Bool())
 
-    val tx_streaming_data  = Input(UInt(32.W))
+    val tx_streaming_data  = Input(UInt(8.W))
     val tx_streaming_valid = Input(Bool())
     val tx_streaming_last  = Input(Bool())
     val tx_streaming_ready = Output(Bool())
 
-    val rx_streaming_data  = Output(UInt(32.W))
+    val rx_streaming_data  = Output(UInt(8.W))
     val rx_streaming_valid = Output(Bool())
     val rx_streaming_last  = Output(Bool())
     val rx_streaming_ready = Input(Bool())
@@ -63,8 +63,6 @@ class GbEMAC extends BlackBox with HasBlackBoxResource {
   addResource("axis_async_fifo.v")
   addResource("axis_async_fifo_adapter.v")
   // Added RTL
-  addResource("AXI4StreamWidthAdapter1to4.v")
-  addResource("AXI4StreamWidthAdapter4to1.v")
   addResource("packet_creation_udp.v")
   addResource("GbEMAC.v")
 }
@@ -82,25 +80,19 @@ class GbemacWrapperIO extends Bundle {
 }
 
 class GbemacWrapper(csrAddress: AddressSet, beatBytes: Int) extends LazyModule()(Parameters.empty) {
-  val configBlock = LazyModule(new TemacConfig(csrAddress, beatBytes) {
-    def makeIO2(): TemacConfigIO = {
-      val io2: TemacConfigIO = IO(io.cloneType)
-      io2.suggestName("ioReg")
-      io2 <> io
-      io2
-    }
-    val ioReg = InModuleBody { makeIO2() }
-  })
+  val configBlock = LazyModule(new AXI4TemacConfig(csrAddress, beatBytes))
 
   // Nodes
-  val mem: Option[AXI4IdentityNode] = Some(AXI4IdentityNode())
+  val mem: Option[AXI4RegisterNode] = configBlock.mem
   val streamNode: AXI4StreamIdentityNode = AXI4StreamIdentityNode()
-  configBlock.mem.get := mem.get
+  val inNode = streamNode :=AXI4StreamWidthAdapter.oneToN(beatBytes)
+  val outNode = AXI4StreamWidthAdapter.nToOne(beatBytes) := streamNode
 
-  // IO
-  lazy val io: GbemacWrapperIO = IO(new GbemacWrapperIO)
+  lazy val module = new Impl
+  class Impl extends LazyModuleImp(this) {
+    // IOs
+    val io: GbemacWrapperIO = IO(new GbemacWrapperIO)
 
-  lazy val module: LazyModuleImp = new LazyModuleImp(this) {
     val gbemac: GbEMAC = Module(new GbEMAC())
 
     gbemac.io.clk                    := clock
@@ -126,16 +118,16 @@ class GbemacWrapper(csrAddress: AddressSet, beatBytes: Int) extends LazyModule()
     streamNode.out.head._1.bits.last := gbemac.io.rx_streaming_last
     gbemac.io.rx_streaming_ready     := streamNode.out.head._1.ready
 
-    gbemac.io.packetSize             := configBlock.ioReg.packetSize
-    gbemac.io.srcMac                 := configBlock.ioReg.srcMac
-    gbemac.io.srcIp                  := configBlock.ioReg.srcIp
-    gbemac.io.srcPort                := configBlock.ioReg.srcPort
-    gbemac.io.dstMac                 := configBlock.ioReg.dstMac
-    gbemac.io.dstIp                  := configBlock.ioReg.dstIp
-    gbemac.io.dstPort                := configBlock.ioReg.dstPort
-    gbemac.io.dstPort2               := configBlock.ioReg.dstPort2
-    gbemac.io.dstPort1PacketNum      := configBlock.ioReg.dstPort1PacketNum
-    gbemac.io.dstPort2PacketNum      := configBlock.ioReg.dstPort2PacketNum
+    gbemac.io.packetSize             := configBlock.module.io.packetSize
+    gbemac.io.srcMac                 := configBlock.module.io.srcMac
+    gbemac.io.srcIp                  := configBlock.module.io.srcIp
+    gbemac.io.srcPort                := configBlock.module.io.srcPort
+    gbemac.io.dstMac                 := configBlock.module.io.dstMac
+    gbemac.io.dstIp                  := configBlock.module.io.dstIp
+    gbemac.io.dstPort                := configBlock.module.io.dstPort
+    gbemac.io.dstPort2               := configBlock.module.io.dstPort2
+    gbemac.io.dstPort1PacketNum      := configBlock.module.io.dstPort1PacketNum
+    gbemac.io.dstPort2PacketNum      := configBlock.module.io.dstPort2PacketNum
   }
 }
 
@@ -152,8 +144,8 @@ class GbemacWrapperBlock(csrAddress: AddressSet, beatBytes: Int)(implicit p: Par
   // Stream Node
   val ioInNode = BundleBridgeSource(() => new AXI4StreamBundle(AXI4StreamBundleParameters(n = 4)))
   val ioOutNode = BundleBridgeSink[AXI4StreamBundle]()
-  ioOutNode  := AXI4StreamToBundleBridge(AXI4StreamSlaveParameters())       := streamNode
-  streamNode := BundleBridgeToAXI4Stream(AXI4StreamMasterParameters(n = 4)) := ioInNode
+  ioOutNode  := AXI4StreamToBundleBridge(AXI4StreamSlaveParameters()) := outNode
+  inNode := BundleBridgeToAXI4Stream(AXI4StreamMasterParameters(n = 4)) := ioInNode
   val in  = InModuleBody { ioInNode.makeIO() }
   val out = InModuleBody { ioOutNode.makeIO() }
 }

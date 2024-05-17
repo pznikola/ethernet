@@ -12,23 +12,13 @@ import org.chipsalliance.diplomacy.lazymodule._
 
 class TLGbemacWrapper(csrAddress: AddressSet, beatBytes: Int) extends LazyModule()(Parameters.empty) {
 
-  val configBlock = LazyModule(new TemacConfig(csrAddress, beatBytes) {
-    def makeIO2(): TemacConfigIO = {
-      val io2: TemacConfigIO = IO(io.cloneType)
-      io2.suggestName("ioReg")
-      io2 <> io
-      io2
-    }
-
-    val ioReg: ModuleValue[TemacConfigIO] = InModuleBody {
-      makeIO2()
-    }
-  })
+  val configBlock: TLTemacConfig = LazyModule(new TLTemacConfig(csrAddress, beatBytes))
 
   // Nodes
-  val mem: Option[TLIdentityNode] = Some(TLIdentityNode())
-  val streamNode: AXI4StreamIdentityNode = AXI4StreamIdentityNode()
-  configBlock.mem.get := AXI4UserYanker() := AXI4Deinterleaver(64) := TLToAXI4() := mem.get
+  val mem: Option[TLRegisterNode] = configBlock.mem
+  private val streamNode: AXI4StreamIdentityNode = AXI4StreamIdentityNode()
+  val inNode = streamNode :=AXI4StreamWidthAdapter.oneToN(beatBytes)
+  val outNode = AXI4StreamWidthAdapter.nToOne(beatBytes) := streamNode
 
   lazy val module = new Impl
   class Impl extends LazyModuleImp(this) {
@@ -60,16 +50,16 @@ class TLGbemacWrapper(csrAddress: AddressSet, beatBytes: Int) extends LazyModule
     streamNode.out.head._1.bits.last := gbemac.io.rx_streaming_last
     gbemac.io.rx_streaming_ready     := streamNode.out.head._1.ready
 
-    gbemac.io.packetSize             := configBlock.ioReg.packetSize
-    gbemac.io.srcMac                 := configBlock.ioReg.srcMac
-    gbemac.io.srcIp                  := configBlock.ioReg.srcIp
-    gbemac.io.srcPort                := configBlock.ioReg.srcPort
-    gbemac.io.dstMac                 := configBlock.ioReg.dstMac
-    gbemac.io.dstIp                  := configBlock.ioReg.dstIp
-    gbemac.io.dstPort                := configBlock.ioReg.dstPort
-    gbemac.io.dstPort2               := configBlock.ioReg.dstPort2
-    gbemac.io.dstPort1PacketNum      := configBlock.ioReg.dstPort1PacketNum
-    gbemac.io.dstPort2PacketNum      := configBlock.ioReg.dstPort2PacketNum
+    gbemac.io.packetSize             := configBlock.module.io.packetSize
+    gbemac.io.srcMac                 := configBlock.module.io.srcMac
+    gbemac.io.srcIp                  := configBlock.module.io.srcIp
+    gbemac.io.srcPort                := configBlock.module.io.srcPort
+    gbemac.io.dstMac                 := configBlock.module.io.dstMac
+    gbemac.io.dstIp                  := configBlock.module.io.dstIp
+    gbemac.io.dstPort                := configBlock.module.io.dstPort
+    gbemac.io.dstPort2               := configBlock.module.io.dstPort2
+    gbemac.io.dstPort1PacketNum      := configBlock.module.io.dstPort1PacketNum
+    gbemac.io.dstPort2PacketNum      := configBlock.module.io.dstPort2PacketNum
   }
 }
 
@@ -84,23 +74,23 @@ class TLGbemacWrapperBlock(csrAddress: AddressSet, beatBytes: Int)(implicit p: P
   }
   val ioInNode = BundleBridgeSource(() => new AXI4StreamBundle(AXI4StreamBundleParameters(n = 4)))
   val ioOutNode = BundleBridgeSink[AXI4StreamBundle]()
-  ioOutNode  := AXI4StreamToBundleBridge(AXI4StreamSlaveParameters())       := streamNode
-  streamNode := BundleBridgeToAXI4Stream(AXI4StreamMasterParameters(n = 4)) := ioInNode
+  ioOutNode := AXI4StreamToBundleBridge(AXI4StreamSlaveParameters()) := outNode
+  inNode := BundleBridgeToAXI4Stream(AXI4StreamMasterParameters(n = 4)) := ioInNode
   val in  = InModuleBody { ioInNode.makeIO() }
   val out = InModuleBody { ioOutNode.makeIO() }
 
   // Generate TL slave output
   def standaloneParams: TLBundleParameters =
     TLBundleParameters(
-      addressBits = beatBytes * 8,
-      dataBits = beatBytes * 8,
-      sourceBits = 1,
-      sinkBits = 1,
-      sizeBits = 6,
-      echoFields = Seq(),
-      requestFields = Seq(),
+      addressBits    = beatBytes * 8,
+      dataBits       = beatBytes * 8,
+      sourceBits     = 1,
+      sinkBits       = 1,
+      sizeBits       = 6,
+      echoFields     = Seq(),
+      requestFields  = Seq(),
       responseFields = Seq(),
-      hasBCE = false
+      hasBCE         = false
     )
 }
 

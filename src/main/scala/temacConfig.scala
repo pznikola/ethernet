@@ -3,12 +3,15 @@ package ethernet
 import chisel3._
 import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
 import chisel3.util._
+import dspblocks.DspBlock
 import freechips.rocketchip.amba.axi4._
 import freechips.rocketchip.diplomacy.{AddressSet, SimpleDevice}
 import freechips.rocketchip.regmapper._
+import freechips.rocketchip.tilelink.{BundleBridgeToTL, TLBundle, TLBundleParameters, TLClientPortParameters, TLEdgeIn, TLEdgeOut, TLManagerPortParameters, TLMasterParameters, TLMasterPortParameters, TLRegisterNode}
 import org.chipsalliance.cde.config.Parameters
 import org.chipsalliance.diplomacy.bundlebridge.BundleBridgeSource
 import org.chipsalliance.diplomacy.lazymodule.{InModuleBody, LazyModule, LazyModuleImp}
+import org.chipsalliance.diplomacy.nodes.MixedNode
 
 class TemacConfigIO extends Bundle {
   val packetSize        = Output(UInt(16.W))
@@ -23,15 +26,35 @@ class TemacConfigIO extends Bundle {
   val dstPort2PacketNum = Output(UInt(16.W))
 }
 
-class TemacConfig(csrAddress: AddressSet, beatBytes:  Int) extends LazyModule()(Parameters.empty) {
+class TLTemacConfig(csrAddress: AddressSet, beatBytes: Int)
+  extends TemacConfig[TLClientPortParameters, TLManagerPortParameters, TLEdgeOut, TLEdgeIn, TLBundle](csrAddress, beatBytes) {
+  // make diplomatic TL node for regmap
+  override val mem: Option[TLRegisterNode] = Some(TLRegisterNode(address = Seq(csrAddress), device = dtsdevice, beatBytes = beatBytes))
+  override def regmap(mapping: (Int, Seq[RegField])*): Unit = mem.get.regmap(mapping: _*)
+}
+
+class AXI4TemacConfig(csrAddress: AddressSet, beatBytes: Int)
+  extends TemacConfig[AXI4MasterPortParameters, AXI4SlavePortParameters, AXI4EdgeParameters, AXI4EdgeParameters, AXI4Bundle](csrAddress, beatBytes) {
+  // make diplomatic TL node for regmap
+  override val mem: Option[AXI4RegisterNode] = Some(AXI4RegisterNode(address = csrAddress, beatBytes = beatBytes))
+  override def regmap(mapping: (Int, Seq[RegField])*): Unit = mem.get.regmap(mapping: _*)
+}
+
+abstract class TemacConfig[D, U, EO, EI, B <: Data](csrAddress: AddressSet, beatBytes: Int) extends LazyModule()(Parameters.empty) {
   // DTS
-  val dtsdevice = new SimpleDevice("ethernet", Seq("chipyard, ethernet"))
+  val dtsdevice: SimpleDevice = new SimpleDevice("temac", Seq("gbemac"))
 
-  lazy val io = Wire(new TemacConfigIO)
+  // Memory Mapped Node for registers
+  val mem: Option[MixedNode[D, U, EI, B, D, U, EO, B]]
 
-  val mem = Some(AXI4RegisterNode(address = csrAddress, beatBytes = beatBytes))
+  // RegMap
+  def regmap(mapping: RegField.Map*): Unit
 
-  lazy val module = new LazyModuleImp(this) {
+  lazy val module = new Impl
+  class Impl extends LazyModuleImp(this) {
+    // IO
+    val io: TemacConfigIO = IO(new TemacConfigIO)
+    // Registers
     val packetSize        = RegInit(UInt(16.W), 1024.U)
     val srcMacHigh        = RegInit(UInt(24.W), 0.U)
     val srcMacLow         = RegInit(UInt(24.W), 0.U)
@@ -59,7 +82,7 @@ class TemacConfig(csrAddress: AddressSet, beatBytes:  Int) extends LazyModule()(
       RegField.w(16, dstPort1PacketNum, RegFieldDesc(name = "dstPort1PacketNum", desc = "Number of packets to destination port 1")), // 0x28
       RegField.w(16, dstPort2PacketNum, RegFieldDesc(name = "dstPort2PacketNum", desc = "Number of packets to destination port 2"))  // 0x2A
     )
-    mem.get.regmap(fields.zipWithIndex.map({ case (f, i) => i * beatBytes -> Seq(f) }): _*)
+    regmap(fields.zipWithIndex.map({ case (f, i) => i * beatBytes -> Seq(f) }): _*)
 
     io.packetSize        := packetSize
     io.srcMac            := Cat(srcMacHigh, srcMacLow)
@@ -74,29 +97,31 @@ class TemacConfig(csrAddress: AddressSet, beatBytes:  Int) extends LazyModule()(
   }
 }
 
-class TemacConfigBlock(csrAddress: AddressSet, beatBytes:  Int)(implicit p: Parameters) extends TemacConfig(csrAddress, beatBytes) {
-  def makeIO2(): TemacConfigIO = {
-    val io2: TemacConfigIO = IO(io.cloneType)
-    io2.suggestName("ioConfig")
-    io2 <> io
-    io2
-  }
-  val ioConfig = InModuleBody { makeIO2() }
-
-  def standaloneParams = AXI4BundleParameters(addrBits = 32, dataBits = 32, idBits = 1)
+class TLTemacConfigBlock(csrAddress: AddressSet, beatBytes:  Int)(implicit p: Parameters) extends TLTemacConfig(csrAddress, beatBytes) {
   val ioMem = mem.map { m => {
-      val ioMemNode = BundleBridgeSource(() => AXI4Bundle(standaloneParams))
-      m := BundleBridgeToAXI4(AXI4MasterPortParameters(Seq(AXI4MasterParameters("bundleBridgeToAXI4")))) := ioMemNode
-      val ioMem = InModuleBody { ioMemNode.makeIO() }
-      ioMem
-    }
+    val ioMemNode = BundleBridgeSource(() => TLBundle(standaloneParams))
+    m := BundleBridgeToTL(TLMasterPortParameters.v1(Seq(TLMasterParameters.v1("bundleBridgeToTL")))) := ioMemNode
+    val ioMem = InModuleBody { ioMemNode.makeIO() }
+    ioMem
   }
+  }
+  // Generate TL slave output
+  def standaloneParams: TLBundleParameters =
+    TLBundleParameters(
+      addressBits    = beatBytes * 8,
+      dataBits       = beatBytes * 8,
+      sourceBits     = 1,
+      sinkBits       = 1,
+      sizeBits       = 6,
+      echoFields     = Seq(),
+      requestFields  = Seq(),
+      responseFields = Seq(),
+      hasBCE         = false
+    )
 }
 
-object TemacConfigBlockApp extends App {
+object TLTemacConfigBlockApp extends App {
   implicit val p: Parameters = Parameters.empty
-  val configModule = LazyModule(new TemacConfigBlock(AddressSet(0x20000000, 0xff), 4) {
-    override def standaloneParams = AXI4BundleParameters(addrBits = 32, dataBits = 32, idBits = 1)
-  })
+  val configModule = LazyModule(new TLTemacConfigBlock(AddressSet(0x20000000, 0xff), 4))
   (new ChiselStage).execute(Array("--target-dir", "verilog/TemacConfig"), Seq(ChiselGeneratorAnnotation(() => configModule.module)))
 }
